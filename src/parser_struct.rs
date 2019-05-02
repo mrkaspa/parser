@@ -71,6 +71,22 @@ impl<'a, A, B> ParserStruct<(A, B)> for PairParser<'a, A, B> {
     }
 }
 
+struct ZeroOrMoreParser<'a, A> {
+    parser: &'a ParserStruct<A>,
+}
+
+impl<'a, A> ParserStruct<Vec<A>> for ZeroOrMoreParser<'a, A> {
+    fn parse(&self, input: String) -> ParseResult<Vec<A>> {
+        let mut result = Vec::new();
+        let mut to_parse = input;
+        while let Ok((rest, parsed)) = self.parser.parse(to_parse.clone()) {
+            result.push(parsed);
+            to_parse = rest;
+        }
+        Ok((to_parse, result))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -98,19 +114,19 @@ mod tests {
     #[test]
     fn test_pair() {
         let phrase = String::from("<demo-id>");
-        let parser_less = LiteralParser {
+        let less_parser = LiteralParser {
             expected: String::from("<"),
         };
-        let parser_id = IdentParser {};
-        let parser_great = LiteralParser {
+        let id_parser = IdentParser {};
+        let great_parser = LiteralParser {
             expected: String::from(">"),
         };
         let pair_parser = PairParser {
             parser_a: &PairParser {
-                parser_a: &parser_less,
-                parser_b: &parser_id,
+                parser_a: &less_parser,
+                parser_b: &id_parser,
             },
-            parser_b: &parser_great,
+            parser_b: &great_parser,
         };
         assert_eq!(
             pair_parser.parse(phrase),
@@ -120,6 +136,24 @@ mod tests {
                     (String::from("<"), String::from("demo-id")),
                     String::from(">")
                 )
+            ))
+        );
+    }
+
+    #[test]
+    fn test_zero_or_more() {
+        let phrase = String::from("...");
+        let dot_parser = LiteralParser {
+            expected: String::from("."),
+        };
+        let vec_parser = ZeroOrMoreParser {
+            parser: &dot_parser,
+        };
+        assert_eq!(
+            vec_parser.parse(phrase),
+            Ok((
+                String::from(""),
+                vec![String::from("."), String::from("."), String::from(".")]
             ))
         );
     }

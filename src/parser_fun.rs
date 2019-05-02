@@ -143,9 +143,9 @@ mod tests {
     #[test]
     fn test_pair() {
         let phrase = "<demo-id>";
-        let parser_less = match_literal("<");
-        let parser_great = match_literal(">");
-        let pair_parser = pair(pair(parser_less, match_ident), parser_great);
+        let less_parser = match_literal("<");
+        let great_parser = match_literal(">");
+        let pair_parser = pair(pair(less_parser, match_ident), great_parser);
         assert_eq!(
             pair_parser.parse(phrase),
             Ok(("", (("<", String::from("demo-id")), ">")))
@@ -153,17 +153,17 @@ mod tests {
     }
 
     #[test]
-    fn testzero_or_more() {
+    fn test_zero_or_more() {
         #[derive(Debug, PartialEq, Eq)]
         struct Ident {
             val: String,
         };
 
         let phrase = "<demo-id><kaspa><xxx>";
-        let parser_less = match_literal("<");
-        let parser_great = match_literal(">");
+        let less_parser = match_literal("<");
+        let great_parser = match_literal(">");
         let ident_parser = map(match_ident, |id| Ident { val: id });
-        let pair_parser = pair(pair(parser_less, ident_parser), parser_great);
+        let pair_parser = pair(pair(less_parser, ident_parser), great_parser);
         assert_eq!(
             zero_or_more(pair_parser).parse(phrase),
             Ok((
