@@ -29,6 +29,33 @@ impl ParserStruct<String> for LiteralParser {
 }
 
 #[derive(Clone)]
+struct IdentParser {}
+
+impl ParserStruct<String> for IdentParser {
+    fn parse(&self, input: String) -> ParseResult<String> {
+        let mut matched = String::new();
+        let mut chars = input.chars();
+
+        match chars.next() {
+            Some(next) if next.is_alphabetic() => matched.push(next),
+            _ => return Err(input),
+        };
+
+        while let Some(next) = chars.next() {
+            if next.is_alphabetic() || next == '-' {
+                matched.push(next);
+            } else {
+                break;
+            }
+        }
+
+        let next_index = matched.len();
+        let rest = &input[next_index..];
+        Ok((rest.to_string(), matched))
+    }
+}
+
+#[derive(Clone)]
 struct PairParser<'a, A, B> {
     parser_a: &'a ParserStruct<A>,
     parser_b: &'a ParserStruct<B>,
@@ -59,21 +86,41 @@ mod tests {
     }
 
     #[test]
+    fn test_ident() {
+        let phrase = String::from("demo-id>");
+        let parser = IdentParser {};
+        assert_eq!(
+            parser.parse(phrase),
+            Ok((String::from(">"), String::from("demo-id")))
+        );
+    }
+
+    #[test]
     fn test_pair() {
-        let phrase = String::from("<>");
+        let phrase = String::from("<demo-id>");
         let parser_less = LiteralParser {
             expected: String::from("<"),
         };
+        let parser_id = IdentParser {};
         let parser_great = LiteralParser {
             expected: String::from(">"),
         };
         let pair_parser = PairParser {
-            parser_a: &parser_less,
+            parser_a: &PairParser {
+                parser_a: &parser_less,
+                parser_b: &parser_id,
+            },
             parser_b: &parser_great,
         };
         assert_eq!(
             pair_parser.parse(phrase),
-            Ok((String::from(""), (String::from("<"), String::from(">"))))
+            Ok((
+                String::from(""),
+                (
+                    (String::from("<"), String::from("demo-id")),
+                    String::from(">")
+                )
+            ))
         );
     }
 }
