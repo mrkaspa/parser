@@ -57,8 +57,8 @@ impl ParserStruct<String> for IdentParser {
 
 #[derive(Clone)]
 struct PairParser<'a, A, B> {
-    parser_a: &'a ParserStruct<A>,
-    parser_b: &'a ParserStruct<B>,
+    parser_a: &'a dyn ParserStruct<A>,
+    parser_b: &'a dyn ParserStruct<B>,
 }
 
 impl<'a, A, B> ParserStruct<(A, B)> for PairParser<'a, A, B> {
@@ -72,7 +72,7 @@ impl<'a, A, B> ParserStruct<(A, B)> for PairParser<'a, A, B> {
 }
 
 struct ZeroOrMoreParser<'a, A> {
-    parser: &'a ParserStruct<A>,
+    parser: &'a dyn ParserStruct<A>,
 }
 
 impl<'a, A> ParserStruct<Vec<A>> for ZeroOrMoreParser<'a, A> {
